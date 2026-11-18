@@ -1,0 +1,351 @@
+/* ROOMTONE Global Pixel Art Stylesheet */
+
+:root {
+  --font-retro: 'Press Start 2P', monospace;
+  --font-ui: 'Silkscreen', monospace;
+  --font-lcd: 'VT323', monospace;
+
+  /* Theme Defaults */
+  --c-bg: #120e1c;
+  --c-border: #181220;
+  --c-card-bg: #ffd1dc;
+  --c-card-border: #d48b9f;
+  --c-primary: #ff6584;
+  --c-accent: #b388eb;
+  --c-text: #2d1832;
+  --c-highlight: #ffffff;
+  --c-shadow: #8f536c;
+}
+
+/* Crisp Pixel Art Rendering */
+*, *::before, *::after {
+  box-sizing: border-box;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+  text-rendering: geometricPrecision;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-ui);
+  background-color: var(--c-bg);
+  color: #fff;
+  min-height: 100vh;
+  user-select: none;
+  -webkit-user-select: none;
+  overflow-x: hidden;
+}
+
+/* Pixel Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0d0a14;
+  border-left: 2px solid #000;
+}
+::-webkit-scrollbar-thumb {
+  background: #38bdf8;
+  border: 2px solid #000;
+}
+
+/* Chunky Pixel Card / Box Containers */
+.pixel-card {
+  position: relative;
+  background-color: #1a1626;
+  border: 3px solid #000000;
+  box-shadow: 
+    inset 2px 2px 0 0 rgba(255, 255, 255, 0.35),
+    inset -2px -2px 0 0 rgba(0, 0, 0, 0.4),
+    3px 3px 0 0 #000000;
+}
+
+/* Chunky Pixel Buttons */
+.pixel-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--font-retro);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  border: 2px solid #000;
+  padding: 6px 10px;
+  background-color: #ec4899;
+  color: #fff;
+  text-shadow: 1px 1px 0 #000;
+  box-shadow: 
+    inset 2px 2px 0 0 rgba(255, 255, 255, 0.4),
+    inset -2px -2px 0 0 rgba(0, 0, 0, 0.4),
+    2px 2px 0 0 #000;
+  transition: transform 0.05s steps(2);
+  outline: none;
+}
+
+.pixel-btn:hover {
+  filter: brightness(1.15);
+}
+
+.pixel-btn:active, .pixel-btn.is-active {
+  transform: translate(2px, 2px);
+  box-shadow: 
+    inset 2px 2px 0 0 rgba(0, 0, 0, 0.4),
+    inset -1px -1px 0 0 rgba(255, 255, 255, 0.3),
+    0px 0px 0 0 #000;
+}
+
+.pixel-btn-secondary {
+  background-color: #27272a;
+  color: #e4e4e7;
+  text-shadow: none;
+  box-shadow: 
+    inset 2px 2px 0 0 #52525b,
+    inset -2px -2px 0 0 #18181b,
+    2px 2px 0 0 #000;
+}
+
+.pixel-btn-icon {
+  padding: 5px;
+  min-width: 32px;
+  min-height: 32px;
+}
+
+.pixel-badge {
+  display: inline-block;
+  padding: 2px 5px;
+  font-family: var(--font-retro);
+  font-size: 7px;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  box-shadow: 1px 1px 0 #000;
+}
+
+/* Stepped Pixel Keyframe Animations */
+@keyframes pixel-spin {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(90deg); }
+  50% { transform: rotate(180deg); }
+  75% { transform: rotate(270deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pixel-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes pixel-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+@keyframes plant-sway {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-2deg); }
+  75% { transform: rotate(2deg); }
+}
+
+@keyframes cat-breathe {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.08); }
+}
+
+.anim-pixel-spin {
+  animation: pixel-spin 1.4s infinite steps(4);
+}
+.anim-float {
+  animation: pixel-float 2.5s infinite steps(2);
+}
+.anim-blink {
+  animation: pixel-blink 1s infinite steps(1);
+}
+.anim-plant {
+  animation: plant-sway 4s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+.anim-cat {
+  animation: cat-breathe 3s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+/* Custom 8-bit Fullscreen Button */
+.pixel-fullscreen-btn {
+  transition: transform 0.08s ease, filter 0.08s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.pixel-fullscreen-btn:hover {
+  filter: brightness(1.18) drop-shadow(0 2px 8px rgba(56, 189, 248, 0.45));
+}
+.pixel-fullscreen-btn:active {
+  filter: brightness(0.9);
+  transform: translateY(2px);
+}
+
+/* Custom 8-bit Day/Night Mode Button */
+.pixel-mode-btn {
+  transition: transform 0.08s ease, filter 0.08s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.pixel-mode-btn:hover {
+  filter: brightness(1.15) drop-shadow(0 2px 8px rgba(251, 191, 36, 0.5));
+}
+.pixel-mode-btn:active {
+  filter: brightness(0.9);
+  transform: translateY(2px);
+}
+
+
+/* Animated Pixel Window Sky Animations */
+@keyframes cloud-drift-bank {
+  0% { transform: translateX(0px); }
+  100% { transform: translateX(-509px); }
+}
+
+@keyframes cloud-drift-night-bank {
+  0% { transform: translateX(0px); }
+  100% { transform: translateX(-537px); }
+}
+
+@keyframes cloud-drift-mid {
+  0% { transform: translateX(0px); }
+  100% { transform: translateX(-420px); }
+}
+
+@keyframes cloud-drift-fast {
+  0% { transform: translateX(0px); }
+  100% { transform: translateX(-350px); }
+}
+
+/* Gentle Shimmering Star Animations (No scale jumps / Stationary in plane) */
+@keyframes star-shimmer-1 {
+  0%, 100% {
+    opacity: 0.4;
+    filter: none;
+  }
+  30% {
+    opacity: 0.35;
+    filter: none;
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 2px rgba(254, 240, 138, 0.75));
+  }
+  65% {
+    opacity: 0.85;
+    filter: drop-shadow(0 0 1px rgba(254, 240, 138, 0.5));
+  }
+  80% {
+    opacity: 0.5;
+    filter: none;
+  }
+}
+
+@keyframes star-shimmer-2 {
+  0%, 100% {
+    opacity: 0.35;
+    filter: none;
+  }
+  25% {
+    opacity: 0.5;
+    filter: none;
+  }
+  45% {
+    opacity: 1;
+    filter: drop-shadow(0 0 2px rgba(254, 240, 138, 0.8));
+  }
+  60% {
+    opacity: 0.7;
+    filter: none;
+  }
+  80% {
+    opacity: 0.3;
+    filter: none;
+  }
+}
+
+@keyframes star-shimmer-3 {
+  0%, 100% {
+    opacity: 0.5;
+    filter: none;
+  }
+  35% {
+    opacity: 0.4;
+    filter: none;
+  }
+  55% {
+    opacity: 1;
+    filter: drop-shadow(0 0 2px rgba(254, 240, 138, 0.75));
+  }
+  70% {
+    opacity: 0.75;
+    filter: none;
+  }
+  85% {
+    opacity: 0.45;
+    filter: none;
+  }
+}
+
+@keyframes star-shimmer-4 {
+  0%, 100% {
+    opacity: 0.3;
+    filter: none;
+  }
+  20% {
+    opacity: 0.4;
+    filter: none;
+  }
+  40% {
+    opacity: 0.95;
+    filter: drop-shadow(0 0 2px rgba(254, 240, 138, 0.7));
+  }
+  55% {
+    opacity: 0.6;
+    filter: none;
+  }
+  75% {
+    opacity: 0.35;
+    filter: none;
+  }
+}
+
+.anim-star-shimmer-1 {
+  animation: star-shimmer-1 2.8s infinite ease-in-out;
+}
+
+.anim-star-shimmer-2 {
+  animation: star-shimmer-2 3.4s infinite ease-in-out 0.9s;
+}
+
+.anim-star-shimmer-3 {
+  animation: star-shimmer-3 2.5s infinite ease-in-out 1.4s;
+}
+
+.anim-star-shimmer-4 {
+  animation: star-shimmer-4 3.1s infinite ease-in-out 0.5s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-cloud-bank,
+  .anim-cloud-night-bank,
+  .anim-cloud-mid,
+  .anim-cloud-fast,
+  .anim-star-shimmer-1,
+  .anim-star-shimmer-2,
+  .anim-star-shimmer-3,
+  .anim-star-shimmer-4 {
+    animation: none !important;
+  }
+}
+
+
