@@ -43,7 +43,7 @@ async function generateCodeChallenge(verifier: string): Promise<string> {
 }
 
 export function getStoredClientId(): string {
-  const envId = (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_SPOTIFY_CLIENT_ID;
+  const envId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
   return localStorage.getItem(STORAGE_KEYS.CLIENT_ID) || envId || '';
 }
 
@@ -53,7 +53,7 @@ export function setStoredClientId(clientId: string): void {
 
 export function getRedirectUri(): string {
   // 1. Environment variable if provided
-  const envUri = (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_SPOTIFY_REDIRECT_URI;
+  const envUri = import.meta.env.VITE_SPOTIFY_REDIRECT_URI;
   if (envUri && envUri.trim()) return envUri.trim();
 
   // 2. Custom local override if set in developer settings
