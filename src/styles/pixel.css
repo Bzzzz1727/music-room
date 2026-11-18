@@ -335,6 +335,37 @@ body {
   animation: star-shimmer-4 3.1s infinite ease-in-out 0.5s;
 }
 
+/* Pixel Equalizer Bars Animation */
+@keyframes pixel-eq-1 {
+  0%, 100% { height: 20%; }
+  25% { height: 80%; }
+  50% { height: 40%; }
+  75% { height: 95%; }
+}
+@keyframes pixel-eq-2 {
+  0%, 100% { height: 45%; }
+  20% { height: 95%; }
+  45% { height: 25%; }
+  70% { height: 85%; }
+}
+@keyframes pixel-eq-3 {
+  0%, 100% { height: 65%; }
+  30% { height: 30%; }
+  60% { height: 100%; }
+  85% { height: 50%; }
+}
+@keyframes pixel-eq-4 {
+  0%, 100% { height: 30%; }
+  35% { height: 90%; }
+  65% { height: 45%; }
+  80% { height: 75%; }
+}
+
+.anim-eq-1 { animation: pixel-eq-1 0.75s steps(8) infinite; }
+.anim-eq-2 { animation: pixel-eq-2 0.85s steps(8) infinite 0.1s; }
+.anim-eq-3 { animation: pixel-eq-3 0.65s steps(8) infinite 0.2s; }
+.anim-eq-4 { animation: pixel-eq-4 0.95s steps(8) infinite 0.15s; }
+
 @media (prefers-reduced-motion: reduce) {
   .anim-cloud-bank,
   .anim-cloud-night-bank,
@@ -343,7 +374,11 @@ body {
   .anim-star-shimmer-1,
   .anim-star-shimmer-2,
   .anim-star-shimmer-3,
-  .anim-star-shimmer-4 {
+  .anim-star-shimmer-4,
+  .anim-eq-1,
+  .anim-eq-2,
+  .anim-eq-3,
+  .anim-eq-4 {
     animation: none !important;
   }
 }

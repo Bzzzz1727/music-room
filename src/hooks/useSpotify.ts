@@ -7,6 +7,7 @@ import {
   logoutSpotify,
   getShowProfileInRoom,
   setShowProfileInRoom as persistShowProfileInRoom,
+  getStoredClientId,
 } from '../services/spotifyAuth';
 import {
   fetchSpotifyProfile,
@@ -16,10 +17,11 @@ import {
   nextSpotify,
   previousSpotify,
   seekSpotify,
+  SpotifyRateLimitError,
 } from '../services/spotifyApi';
 
 export function useSpotify() {
-  const [isConnected, setIsConnected] = useState<boolean>(isSpotifyAuthenticated());
+  const [isConnected, setIsConnected] = useState<boolean>(() => isSpotifyAuthenticated());
   const [userProfile, setUserProfile] = useState<SpotifyProfile | null>(null);
   const [playback, setPlayback] = useState<SpotifyPlayback | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -27,6 +29,7 @@ export function useSpotify() {
   const [showProfileInRoom, setShowProfileInRoomState] = useState<boolean>(getShowProfileInRoom());
 
   const pollIntervalRef = useRef<number | null>(null);
+  const rateLimitTimeoutRef = useRef<number | null>(null);
 
   const refreshPlayback = useCallback(async () => {
     if (!isSpotifyAuthenticated()) {
@@ -39,6 +42,16 @@ export function useSpotify() {
       setPlayback(data);
       setError(null);
     } catch (err) {
+      if (err instanceof SpotifyRateLimitError) {
+        // Respect Spotify Rate-Limit Header
+        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+        if (rateLimitTimeoutRef.current) clearTimeout(rateLimitTimeoutRef.current);
+        rateLimitTimeoutRef.current = window.setTimeout(() => {
+          refreshPlayback();
+        }, err.retryAfterSeconds * 1000);
+        return;
+      }
+
       const msg = err instanceof Error ? err.message : 'Error syncing Spotify';
       if (msg.includes('Not authenticated') || msg.includes('401')) {
         setIsConnected(false);
@@ -48,20 +61,26 @@ export function useSpotify() {
     }
   }, []);
 
+  // Handle Initial OAuth Callback & Session Bootstrap
   useEffect(() => {
     async function initAuth() {
+      if (typeof window === 'undefined') return;
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+      const hasCode = urlParams.has('code') || hashParams.has('code');
+
       setIsLoading(true);
       try {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('code')) {
+        if (hasCode) {
           await handleSpotifyCallback();
           setIsConnected(true);
         }
 
         if (isSpotifyAuthenticated()) {
           setIsConnected(true);
-          const profile = await fetchSpotifyProfile();
-          setUserProfile(profile);
+          const profile = await fetchSpotifyProfile().catch(() => null);
+          if (profile) setUserProfile(profile);
           await refreshPlayback();
         }
       } catch (err) {
@@ -75,21 +94,28 @@ export function useSpotify() {
     initAuth();
   }, [refreshPlayback]);
 
+  // Polling for Playback State (Compliant with Spotify Developer Polling Guidelines)
   useEffect(() => {
     if (!isConnected) {
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+      if (rateLimitTimeoutRef.current) clearTimeout(rateLimitTimeoutRef.current);
       return;
     }
 
     const startPolling = () => {
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+      const intervalMs = playback?.isPlaying ? 3500 : 6000;
       pollIntervalRef.current = window.setInterval(() => {
-        if (document.visibilityState === 'visible') refreshPlayback();
-      }, 3500);
+        if (document.visibilityState === 'visible') {
+          refreshPlayback();
+        }
+      }, intervalMs);
     };
 
     startPolling();
-    const handleVis = () => {
+
+    // Pause polling when tab is not visible, resume when active
+    const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         refreshPlayback();
         startPolling();
@@ -98,15 +124,18 @@ export function useSpotify() {
       }
     };
 
-    document.addEventListener('visibilitychange', handleVis);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-      document.removeEventListener('visibilitychange', handleVis);
+      if (rateLimitTimeoutRef.current) clearTimeout(rateLimitTimeoutRef.current);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [isConnected, refreshPlayback]);
+  }, [isConnected, playback?.isPlaying, refreshPlayback]);
 
+  // Client-side smooth progress increment while playing
   useEffect(() => {
-    if (!isConnected || !playback?.isPlaying) return;
+    if (!isConnected || !playback?.isPlaying || !playback.track) return;
+
     const ticker = setInterval(() => {
       setPlayback((prev) => {
         if (!prev || !prev.isPlaying || !prev.track) return prev;
@@ -114,14 +143,15 @@ export function useSpotify() {
         return { ...prev, progressMs: newProgress };
       });
     }, 1000);
-    return () => clearInterval(ticker);
-  }, [isConnected, playback?.isPlaying]);
 
-  const login = useCallback(async (clientId?: string) => {
+    return () => clearInterval(ticker);
+  }, [isConnected, playback?.isPlaying, playback?.track]);
+
+  const login = useCallback(async (clientId?: string, redirectUri?: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      await initiateSpotifyLogin(clientId);
+      await initiateSpotifyLogin(clientId, redirectUri);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to start login';
       setError(msg);
@@ -153,7 +183,7 @@ export function useSpotify() {
         await playSpotify();
         setPlayback((prev) => (prev ? { ...prev, isPlaying: true } : null));
       }
-      setTimeout(refreshPlayback, 500);
+      setTimeout(refreshPlayback, 600);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Playback control failed';
       setError(msg);
@@ -164,7 +194,7 @@ export function useSpotify() {
   const skipNext = useCallback(async () => {
     try {
       await nextSpotify();
-      setTimeout(refreshPlayback, 600);
+      setTimeout(refreshPlayback, 700);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Skip next failed';
       setError(msg);
@@ -175,7 +205,7 @@ export function useSpotify() {
   const skipPrev = useCallback(async () => {
     try {
       await previousSpotify();
-      setTimeout(refreshPlayback, 600);
+      setTimeout(refreshPlayback, 700);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Skip previous failed';
       setError(msg);
@@ -183,16 +213,19 @@ export function useSpotify() {
     }
   }, [refreshPlayback]);
 
-  const seek = useCallback(async (positionMs: number) => {
-    try {
-      setPlayback((prev) => (prev ? { ...prev, progressMs: positionMs } : null));
-      await seekSpotify(positionMs);
-      setTimeout(refreshPlayback, 500);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Seek failed';
-      setError(msg);
-    }
-  }, [refreshPlayback]);
+  const seek = useCallback(
+    async (positionMs: number) => {
+      try {
+        setPlayback((prev) => (prev ? { ...prev, progressMs: positionMs } : null));
+        await seekSpotify(positionMs);
+        setTimeout(refreshPlayback, 500);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Seek failed';
+        setError(msg);
+      }
+    },
+    [refreshPlayback]
+  );
 
   return {
     isConnected,
@@ -200,6 +233,7 @@ export function useSpotify() {
     playback,
     isLoading,
     error,
+    storedClientId: getStoredClientId(),
     showProfileInRoom,
     setShowProfileInRoom,
     login,

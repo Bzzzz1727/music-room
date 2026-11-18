@@ -1,6 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { FullscreenButton } from './components/ui/FullscreenButton';
 import { WindowScene } from './components/room/WindowScene';
+import { useSpotify } from './hooks/useSpotify';
+import { SpotifyNowPlaying } from './components/spotify/SpotifyNowPlaying';
+import { SpotifyConnectModal } from './ui/SpotifyConnectModal';
 
 export const App: React.FC = () => {
   // Main Room Container Reference for Fullscreen API
@@ -13,8 +16,29 @@ export const App: React.FC = () => {
     return hour >= 6 && hour < 19;
   });
 
+  const [isSpotifyModalOpen, setIsSpotifyModalOpen] = useState<boolean>(false);
+
+  const {
+    isConnected,
+    userProfile,
+    playback,
+    isLoading: isSpotifyLoading,
+    error: spotifyError,
+    login: loginSpotify,
+    logout: logoutSpotify,
+    togglePlay,
+    skipNext,
+    skipPrev,
+    seek,
+  } = useSpotify();
+
   const handleToggleDayNight = () => {
     setIsDay((prev) => !prev);
+  };
+
+  const handleConnectSpotify = async (clientId: string, redirectUri?: string) => {
+    await loginSpotify(clientId, redirectUri);
+    setIsSpotifyModalOpen(false);
   };
 
   return (
@@ -53,6 +77,33 @@ export const App: React.FC = () => {
       {/* 3. CUSTOM 8-BIT FULLSCREEN BUTTON (Top-Right Corner)           */}
       {/* ------------------------------------------------------------- */}
       <FullscreenButton targetRef={roomContainerRef} />
+
+      {/* ------------------------------------------------------------- */}
+      {/* 4. SPOTIFY NOW PLAYING & MUSIC VISUALIZER (Web API & PKCE)     */}
+      {/* ------------------------------------------------------------- */}
+      <SpotifyNowPlaying
+        isConnected={isConnected}
+        playback={playback}
+        userProfile={userProfile}
+        isLoading={isSpotifyLoading}
+        onConnectClick={() => setIsSpotifyModalOpen(true)}
+        onDisconnect={logoutSpotify}
+        onTogglePlay={togglePlay}
+        onNext={skipNext}
+        onPrev={skipPrev}
+        onSeek={seek}
+      />
+
+      {/* ------------------------------------------------------------- */}
+      {/* 5. SPOTIFY CONNECT MODAL (OAuth 2.0 PKCE Flow)                 */}
+      {/* ------------------------------------------------------------- */}
+      <SpotifyConnectModal
+        isOpen={isSpotifyModalOpen}
+        onClose={() => setIsSpotifyModalOpen(false)}
+        onConnect={handleConnectSpotify}
+        error={spotifyError}
+        isLoading={isSpotifyLoading}
+      />
     </div>
   );
 };
