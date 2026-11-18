@@ -26,10 +26,6 @@ export const App: React.FC = () => {
     error: spotifyError,
     login: loginSpotify,
     logout: logoutSpotify,
-    togglePlay,
-    skipNext,
-    skipPrev,
-    seek,
   } = useSpotify();
 
   const handleToggleDayNight = () => {
@@ -79,7 +75,7 @@ export const App: React.FC = () => {
       <FullscreenButton targetRef={roomContainerRef} />
 
       {/* ------------------------------------------------------------- */}
-      {/* 4. SPOTIFY NOW PLAYING & MUSIC VISUALIZER (Web API & PKCE)     */}
+      {/* 4. SPOTIFY MUSIC INTERFACE WITH ROTATING VINYL                 */}
       {/* ------------------------------------------------------------- */}
       <SpotifyNowPlaying
         isConnected={isConnected}
@@ -88,10 +84,6 @@ export const App: React.FC = () => {
         isLoading={isSpotifyLoading}
         onConnectClick={() => setIsSpotifyModalOpen(true)}
         onDisconnect={logoutSpotify}
-        onTogglePlay={togglePlay}
-        onNext={skipNext}
-        onPrev={skipPrev}
-        onSeek={seek}
       />
 
       {/* ------------------------------------------------------------- */}

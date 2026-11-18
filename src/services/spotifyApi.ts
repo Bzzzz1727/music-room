@@ -1,3 +1,4 @@
+// Spotify Web API Service (Read-Only Playback Visualization)
 import { SpotifyProfile, SpotifyPlayback, SpotifyTrack } from '../types';
 import { getValidAccessToken } from './spotifyAuth';
 
@@ -118,46 +119,4 @@ export async function fetchCurrentPlayback(): Promise<SpotifyPlayback> {
     deviceName: data.device?.name || null,
     deviceType: data.device?.type || null,
   };
-}
-
-export async function playSpotify(): Promise<void> {
-  const res = await spotifyFetch('/me/player/play', { method: 'PUT' });
-  if (!res.ok && res.status !== 204) {
-    if (res.status === 404) {
-      throw new Error('No active Spotify device found. Start music on Spotify first.');
-    }
-    if (res.status === 403) {
-      throw new Error('Playback control requires Spotify Premium.');
-    }
-    throw new Error(`Failed to resume playback (HTTP ${res.status})`);
-  }
-}
-
-export async function pauseSpotify(): Promise<void> {
-  const res = await spotifyFetch('/me/player/pause', { method: 'PUT' });
-  if (!res.ok && res.status !== 204) {
-    throw new Error(`Failed to pause playback (HTTP ${res.status})`);
-  }
-}
-
-export async function nextSpotify(): Promise<void> {
-  const res = await spotifyFetch('/me/player/next', { method: 'POST' });
-  if (!res.ok && res.status !== 204) {
-    throw new Error(`Failed to skip track (HTTP ${res.status})`);
-  }
-}
-
-export async function previousSpotify(): Promise<void> {
-  const res = await spotifyFetch('/me/player/previous', { method: 'POST' });
-  if (!res.ok && res.status !== 204) {
-    throw new Error(`Failed to skip previous (HTTP ${res.status})`);
-  }
-}
-
-export async function seekSpotify(positionMs: number): Promise<void> {
-  const clampedMs = Math.max(0, Math.round(positionMs));
-  const res = await spotifyFetch(`/me/player/seek?position_ms=${clampedMs}`, { method: 'PUT' });
-  if (!res.ok && res.status !== 204) {
-    throw new Error(`Failed to seek (HTTP ${res.status})`);
-  }
 }

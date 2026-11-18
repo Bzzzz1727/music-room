@@ -159,7 +159,9 @@ body {
 }
 
 .anim-pixel-spin {
-  animation: pixel-spin 1.4s infinite steps(4);
+  animation: pixel-spin 2.2s infinite steps(8);
+  transform-origin: center;
+  will-change: transform;
 }
 .anim-float {
   animation: pixel-float 2.5s infinite steps(2);

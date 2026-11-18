@@ -1,4 +1,4 @@
-// Spotify OAuth 2.0 PKCE Service
+// Spotify OAuth 2.0 PKCE Service (Read-Only Visualization)
 
 export const REGISTERED_REDIRECT_URI = 'https://pixelmusic.vercel.app/callback';
 
@@ -11,16 +11,14 @@ export const STORAGE_KEYS = {
   AUTH_STATE: 'roomtone_spotify_auth_state',
   USED_REDIRECT_URI: 'roomtone_spotify_used_redirect_uri',
   CUSTOM_REDIRECT_URI: 'roomtone_spotify_custom_redirect_uri',
-  SHOW_PROFILE_IN_ROOM: 'roomtone_spotify_show_profile_in_room',
 };
 
-// Spotify developer policy compliant scopes:
-// Minimal required permissions to visualize currently playing track, artwork, and playback status
+// Minimal read-only scopes strictly for visualising currently playing track:
+// No playback modification or audio streaming scopes
 export const SPOTIFY_SCOPES = [
   'user-read-playback-state',
   'user-read-currently-playing',
   'user-read-private',
-  'user-modify-playback-state',
 ].join(' ');
 
 function generateRandomString(length: number): string {
@@ -54,15 +52,15 @@ export function setStoredClientId(clientId: string): void {
 }
 
 export function getRedirectUri(): string {
-  // 1. Environment variable if set
+  // 1. Environment variable if provided
   const envUri = (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_SPOTIFY_REDIRECT_URI;
   if (envUri && envUri.trim()) return envUri.trim();
 
-  // 2. Custom override from local storage if set
+  // 2. Custom local override if set in developer settings
   const customUri = localStorage.getItem(STORAGE_KEYS.CUSTOM_REDIRECT_URI);
   if (customUri && customUri.trim()) return customUri.trim();
 
-  // 3. Official registered redirect URI as requested
+  // 3. Registered official redirect URI
   return REGISTERED_REDIRECT_URI;
 }
 
@@ -72,14 +70,6 @@ export function setCustomRedirectUri(uri: string): void {
   } else {
     localStorage.removeItem(STORAGE_KEYS.CUSTOM_REDIRECT_URI);
   }
-}
-
-export function getShowProfileInRoom(): boolean {
-  return localStorage.getItem(STORAGE_KEYS.SHOW_PROFILE_IN_ROOM) !== 'false';
-}
-
-export function setShowProfileInRoom(val: boolean): void {
-  localStorage.setItem(STORAGE_KEYS.SHOW_PROFILE_IN_ROOM, val ? 'true' : 'false');
 }
 
 export async function initiateSpotifyLogin(clientIdParam?: string, redirectUriParam?: string): Promise<void> {
@@ -129,7 +119,7 @@ export async function handleSpotifyCallback(): Promise<boolean> {
   const storedState = localStorage.getItem(STORAGE_KEYS.AUTH_STATE);
   if (!state || state !== storedState) {
     cleanCallbackUrl();
-    throw new Error('Invalid OAuth state. Potential CSRF security check failed.');
+    throw new Error('OAuth state verification failed. Please try connecting again.');
   }
 
   const verifier = localStorage.getItem(STORAGE_KEYS.CODE_VERIFIER);
@@ -156,7 +146,7 @@ export async function handleSpotifyCallback(): Promise<boolean> {
 
     if (!response.ok) {
       const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.error_description || `Failed to exchange code: HTTP ${response.status}`);
+      throw new Error(errData.error_description || `Failed to exchange authorization code (HTTP ${response.status})`);
     }
 
     const data = await response.json();
@@ -176,7 +166,7 @@ export async function handleSpotifyCallback(): Promise<boolean> {
 
 function cleanCallbackUrl(): void {
   if (typeof window === 'undefined') return;
-  // If we arrived at /callback, clean back to base /
+  // If we arrived at /callback, smoothly revert to root path
   const cleanPath = window.location.pathname.endsWith('/callback') ? '/' : window.location.pathname;
   window.history.replaceState({}, document.title, cleanPath);
 }

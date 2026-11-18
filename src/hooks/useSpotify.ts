@@ -5,18 +5,11 @@ import {
   initiateSpotifyLogin,
   handleSpotifyCallback,
   logoutSpotify,
-  getShowProfileInRoom,
-  setShowProfileInRoom as persistShowProfileInRoom,
   getStoredClientId,
 } from '../services/spotifyAuth';
 import {
   fetchSpotifyProfile,
   fetchCurrentPlayback,
-  playSpotify,
-  pauseSpotify,
-  nextSpotify,
-  previousSpotify,
-  seekSpotify,
   SpotifyRateLimitError,
 } from '../services/spotifyApi';
 
@@ -26,7 +19,6 @@ export function useSpotify() {
   const [playback, setPlayback] = useState<SpotifyPlayback | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [showProfileInRoom, setShowProfileInRoomState] = useState<boolean>(getShowProfileInRoom());
 
   const pollIntervalRef = useRef<number | null>(null);
   const rateLimitTimeoutRef = useRef<number | null>(null);
@@ -132,7 +124,7 @@ export function useSpotify() {
     };
   }, [isConnected, playback?.isPlaying, refreshPlayback]);
 
-  // Client-side smooth progress increment while playing
+  // Client-side smooth progress increment while playing (updates playback progress automatically)
   useEffect(() => {
     if (!isConnected || !playback?.isPlaying || !playback.track) return;
 
@@ -168,65 +160,6 @@ export function useSpotify() {
     setError(null);
   }, []);
 
-  const setShowProfileInRoom = useCallback((val: boolean) => {
-    setShowProfileInRoomState(val);
-    persistShowProfileInRoom(val);
-  }, []);
-
-  const togglePlay = useCallback(async () => {
-    if (!playback) return;
-    try {
-      if (playback.isPlaying) {
-        await pauseSpotify();
-        setPlayback((prev) => (prev ? { ...prev, isPlaying: false } : null));
-      } else {
-        await playSpotify();
-        setPlayback((prev) => (prev ? { ...prev, isPlaying: true } : null));
-      }
-      setTimeout(refreshPlayback, 600);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Playback control failed';
-      setError(msg);
-      throw err;
-    }
-  }, [playback, refreshPlayback]);
-
-  const skipNext = useCallback(async () => {
-    try {
-      await nextSpotify();
-      setTimeout(refreshPlayback, 700);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Skip next failed';
-      setError(msg);
-      throw err;
-    }
-  }, [refreshPlayback]);
-
-  const skipPrev = useCallback(async () => {
-    try {
-      await previousSpotify();
-      setTimeout(refreshPlayback, 700);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Skip previous failed';
-      setError(msg);
-      throw err;
-    }
-  }, [refreshPlayback]);
-
-  const seek = useCallback(
-    async (positionMs: number) => {
-      try {
-        setPlayback((prev) => (prev ? { ...prev, progressMs: positionMs } : null));
-        await seekSpotify(positionMs);
-        setTimeout(refreshPlayback, 500);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Seek failed';
-        setError(msg);
-      }
-    },
-    [refreshPlayback]
-  );
-
   return {
     isConnected,
     userProfile,
@@ -234,14 +167,8 @@ export function useSpotify() {
     isLoading,
     error,
     storedClientId: getStoredClientId(),
-    showProfileInRoom,
-    setShowProfileInRoom,
     login,
     logout,
-    togglePlay,
-    skipNext,
-    skipPrev,
-    seek,
     refreshPlayback,
     clearError: () => setError(null),
   };
